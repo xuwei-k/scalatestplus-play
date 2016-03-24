@@ -3,18 +3,13 @@
  */
 package scalaguide.tests.scalatest
 
-// #scalafunctionaltest-imports
 import org.scalatest._
 import org.scalatestplus.play._
 
-import play.api.test._
-import play.api.test.Helpers.{GET => GET_REQUEST, _}
-// #scalafunctionaltest-imports
-
 import play.api.mvc._
-
+import play.api.test.FakeRequest
 import play.api.test.Helpers.{GET => GET_REQUEST, _}
-import play.api.Application
+import play.api.{GlobalSettings, Application}
 import play.api.libs.ws._
 import play.api.inject.guice._
 import play.api.routing._
@@ -22,6 +17,9 @@ import play.api.routing.sird._
 
 abstract class MixedPlaySpec extends fixture.WordSpec with MustMatchers with OptionValues with MixedFixtures
 
+/**
+ *
+ */
 class ScalaFunctionalTestSpec extends MixedPlaySpec with Results {
 
   // lie and make this look like a DB model.
@@ -33,13 +31,13 @@ class ScalaFunctionalTestSpec extends MixedPlaySpec with Results {
 
   "Scala Functional Test" should {
 
-    // #scalafunctionaltest-application
-    val application: Application = new GuiceApplicationBuilder()
-      .configure("some.configuration" -> "value")
-      .build()
-    // #scalafunctionaltest-application
+    // #scalafunctionaltest-fakeApplication
+    val applicationWithGlobal = new GuiceApplicationBuilder().global(new GlobalSettings() {
+      override def onStart(app: Application) { println("Hello world!") }
+    }).build()
+    // #scalafunctionaltest-fakeApplication
 
-    val applicationWithRouter = new GuiceApplicationBuilder().router(Router.from {
+    val application = new GuiceApplicationBuilder().additionalRouter(Router.from {
       case GET(p"/Bob") =>
         Action {
           Ok("Hello Bob") as "text/html; charset=utf-8"
@@ -48,8 +46,8 @@ class ScalaFunctionalTestSpec extends MixedPlaySpec with Results {
 
 
     // #scalafunctionaltest-respondtoroute
-    "respond to the index Action" in new App(applicationWithRouter) {
-      val Some(result) = route(app, FakeRequest(GET_REQUEST, "/Bob"))
+    "respond to the index Action" in new App(application) {
+      val Some(result) = route(FakeRequest(GET_REQUEST, "/Bob"))
 
       status(result) mustEqual OK
       contentType(result) mustEqual Some("text/html")
@@ -81,7 +79,7 @@ class ScalaFunctionalTestSpec extends MixedPlaySpec with Results {
 
 
     // #scalafunctionaltest-testwithbrowser
-    def applicationWithBrowser = new GuiceApplicationBuilder().router(Router.from {
+    def applicationWithBrowser = new GuiceApplicationBuilder().additionalRouter(Router.from {
       case GET(p"/") =>
         Action {
           Ok(
@@ -139,7 +137,7 @@ class ScalaFunctionalTestSpec extends MixedPlaySpec with Results {
     // #scalafunctionaltest-testpaymentgateway
 
     // #scalafunctionaltest-testws
-    val appWithRoutes = new GuiceApplicationBuilder().router(Router.from{
+    val appWithRoutes = new GuiceApplicationBuilder().additionalRouter(Router.from{
       case GET(p"/") =>
         Action {
           Ok("ok")

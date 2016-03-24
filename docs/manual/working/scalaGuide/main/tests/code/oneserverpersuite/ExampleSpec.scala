@@ -3,6 +3,7 @@
  */
 package scalaguide.tests.scalatest.oneserverpersuite
 
+import play.api.test._
 import org.scalatestplus.play._
 import play.api.test.Helpers.{GET => GET_REQUEST, _}
 import play.api.libs.ws._
@@ -19,7 +20,7 @@ class ExampleSpec extends PlaySpec with OneServerPerSuite {
   // Override app if you need an Application with other than
   // default parameters.
   implicit override lazy val app =
-    new GuiceApplicationBuilder().disable[EhCacheModule].router(Router.from {
+    new GuiceApplicationBuilder().disable[EhCacheModule].additionalRouter(Router.from {
       case GET(p"/") => Action { Ok("ok") }
     }).build()
 
@@ -32,7 +33,7 @@ class ExampleSpec extends PlaySpec with OneServerPerSuite {
     // await is from play.api.test.FutureAwaits
     val response = await(wsClient.url(testPaymentGatewayURL).withQueryString("callbackURL" -> callbackURL).get())
 
-    response.status mustBe OK
+    response.status mustBe (OK)
   }
 }
 // #scalafunctionaltest-oneserverpersuite
